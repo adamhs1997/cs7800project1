@@ -42,8 +42,8 @@ class CranFile:
 
 if __name__ == '__main__':
     ''' testing '''
-
-    cf = CranFile (r"D:\CS 7800 Project 1\CranfieldDataset\cran.all")
+    
+    cf = CranFile (r"..\CranfieldDataset\cran.all")
     for doc in cf.docs:
         print (doc.docID, doc.title)
     print (len(cf.docs))
