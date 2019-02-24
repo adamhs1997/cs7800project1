@@ -45,7 +45,7 @@ class IndexItem:
 
     def add(self, docid, pos):
         ''' add a posting'''
-        if not self.posting.has_key(docid):
+        if not docid in self.posting:
             self.posting[docid] = Posting(docid)
         self.posting[docid].append(pos)
 
@@ -97,6 +97,17 @@ class InvertedIndex:
         stemmed_token_list = list(map(lambda tok: util.stemming(tok), token_list_no_stopword))
         print(stemmed_token_list)
         
+        # Note that the stemmed tokens are now our terms
+        for term in stemmed_token_list:
+            # If this term has already appeared, update the existing posting
+            if not term in self.items:
+                self.items[term] = IndexItem(term)
+            # TODO: Get proper position
+            self.items[term].add(doc.docID, 2)
+            
+        print(self.items)
+                
+                
 
 
     def sort(self):
