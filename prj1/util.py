@@ -18,4 +18,12 @@ def stemming(word):
 
     # ToDo
 
+def tokenize_doc(doc):
+    """ Get each token (split on whitespace); lowercase each token """
+    pass
+    
+def preprocess(doc):
+    """ Gets all the docs in Cranfield dataset and preprocesses. Return list
+        of preprocessed tokens in the document """
+    pass
 
