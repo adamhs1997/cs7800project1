@@ -15,6 +15,8 @@ Index structure:
 import util
 import doc
 from cran import CranFile
+from pickle import dump, load
+from math import log10
 
 
 class Posting:
@@ -34,7 +36,10 @@ class Posting:
 
     def term_freq(self):
         ''' return the term frequency in the document'''
-        #ToDo
+        
+        # The number of times a term is in a document corresponds to 
+        #   the length of the position list
+        return len(positions)
        
     # For testing purposes...
     def __repr__(self):
@@ -56,6 +61,14 @@ class IndexItem:
     def sort(self):
         ''' sort by document ID for more efficient merging. For each document also sort the positions'''
         # ToDo
+        
+        # We already have the postings in posting dict. Store the sorted docID keys
+        #   in sorted_postings list, for easier reference in postings dict.
+        self.sorted_postings = sorted(self.posting.keys())
+        
+        # We sort the positions of each posting in place
+        for doc in self.posting:
+            self.posting[doc] = sorted(self.posting[doc])
 
 
 class InvertedIndex:
@@ -119,6 +132,10 @@ class InvertedIndex:
     def sort(self):
         ''' sort all posting lists by docID'''
         #ToDo
+        
+        # The actual sort is implemented in IndexItem. Just call it here.
+        for item in self.items:
+            item.sort()
 
     def find(self, term):
         return self.items[term]
@@ -126,14 +143,30 @@ class InvertedIndex:
     def save(self, filename):
         ''' save to disk'''
         # ToDo: using your preferred method to serialize/deserialize the index
+        
+        # Combine items dict and nDocs into a list so they can be pickled together
+        to_pickle = [self.items, self.nDocs]
+        
+        # Use Pickle to dump the index to a file
+        with open(filename, 'wb') as out:
+            dump(to_pickle, out)
 
     def load(self, filename):
         ''' load from disk'''
         # ToDo
+        
+        # Load data back from pickled file
+        with open(filename, 'rb') as inf:
+            file_read = load(inf)
+            self.items = file_read[0]
+            self.nDocs = file_read[1]
 
     def idf(self, term):
         ''' compute the inverted document frequency for a given term'''
         #ToDo: return the IDF of the term
+        
+        # IDF of term t is log(total # of docs / # docs with t in it)
+        return log10(nDocs / len(self.items[term]))
 
     # more methods if needed
 
