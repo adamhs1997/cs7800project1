@@ -35,6 +35,10 @@ class Posting:
     def term_freq(self):
         ''' return the term frequency in the document'''
         #ToDo
+       
+    # For testing purposes...
+    def __repr__(self):
+        return str(self.positions)
 
 
 class IndexItem:
@@ -82,32 +86,34 @@ class InvertedIndex:
         
         # ---
         
+        # Increment number of documents indexed
+        self.nDocs += 1
+        
         # Grab title and body of doc, merge into one string
         doc_string = doc.title + " " + doc.body
         
         # Tokenize and lowercase doc into list form
         token_list = util.tokenize_doc(doc_string)
-        print(token_list)
             
-        # Remove the stopwords
-        token_list_no_stopword = list(filter(lambda tok: not util.isStopWord(tok), token_list))
-        print(token_list_no_stopword)
+        # Helper function to replace stopwords with empty string
+        def remove_stop_word(tok):
+            return "" if util.isStopWord(tok) else tok
+            
+        # Remove the stopwords from both positional list and token list
+        token_list_no_stopword = list(map(remove_stop_word, token_list))
         
         # Stem the words
         stemmed_token_list = list(map(lambda tok: util.stemming(tok), token_list_no_stopword))
-        print(stemmed_token_list)
         
         # Note that the stemmed tokens are now our terms
-        for term in stemmed_token_list:
+        for pos, term in enumerate(stemmed_token_list):
+            # Skip over stopwords, now replaced by ""
+            if term == "": continue
+            
             # If this term has already appeared, update the existing posting
             if not term in self.items:
                 self.items[term] = IndexItem(term)
-            # TODO: Get proper position
-            self.items[term].add(doc.docID, 2)
-            
-        print(self.items)
-                
-                
+            self.items[term].add(doc.docID, pos)
 
 
     def sort(self):
@@ -136,9 +142,15 @@ def test():
     ''' test your code thoroughly. put the testing cases here'''
     cf = CranFile (r"..\CranfieldDataset\cran.all")
     
-    print(cf.docs[0].body)
+    # print(cf.docs[0].body)
     ii = InvertedIndex()
-    ii.indexDoc(cf.docs[0])
+    for doc in cf.docs:
+        ii.indexDoc(doc)
+    
+    print("Done!")
+    # Test out the thing
+    for item in ii.items.values():
+        print(item.term, item.posting)
     print ('Pass')
 
 def indexingCranfield():
