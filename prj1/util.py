@@ -5,25 +5,41 @@
     shared by both indexing and query processing
 '''
 
+from nltk.stem.porter import PorterStemmer
+
+### Initialization code that we only want to do once ###
+# Read in stop words
+stop_words = open(r'D:\CS 7800 Project 1\prj1\stopwords').read()
+
+# Initialize a stemmer object
+stemmer = PorterStemmer()
 
 
 def isStopWord(word):
     ''' using the NLTK functions, return true/false'''
-
-    # ToDo
+    return word in stop_words
 
 
 def stemming(word):
     ''' return the stem, using a NLTK stemmer. check the project description for installing and using it'''
-
-    # ToDo
+    return stemmer.stem(word)
 
 def tokenize_doc(doc):
     """ Get each token (split on whitespace); lowercase each token """
-    pass
+    return list(map(lambda word: word.lower(), doc.split()))
+
+# This is handled in index.py now    
+# def preprocess(dataset_path):
+    # """ Gets all the docs in Cranfield dataset and preprocesses. Return list
+        # of preprocessed tokens in the document """
+        
+    # # Get all the documents from dataset
+    # cf = CranFile (dataset_path)
     
-def preprocess(doc):
-    """ Gets all the docs in Cranfield dataset and preprocesses. Return list
-        of preprocessed tokens in the document """
-    pass
+    # # For each document...
+        # # Tokenize
+        # # Remove stopwords
+        # # Do the stemming
+    
+    # pass
 
