@@ -68,7 +68,7 @@ class IndexItem:
         
         # We sort the positions of each posting in place
         for doc in self.posting:
-            self.posting[doc] = sorted(self.posting[doc])
+            self.posting[doc].sort()
 
 
 class InvertedIndex:
@@ -135,7 +135,7 @@ class InvertedIndex:
         
         # The actual sort is implemented in IndexItem. Just call it here.
         for item in self.items:
-            item.sort()
+            self.items[item].sort()
 
     def find(self, term):
         return self.items[term]
@@ -166,24 +166,77 @@ class InvertedIndex:
         #ToDo: return the IDF of the term
         
         # IDF of term t is log(total # of docs / # docs with t in it)
-        return log10(nDocs / len(self.items[term]))
+        return log10(self.nDocs / len(self.items[term].posting))
 
     # more methods if needed
 
 
 def test():
     ''' test your code thoroughly. put the testing cases here'''
-    cf = CranFile (r"..\CranfieldDataset\cran.all")
     
-    # print(cf.docs[0].body)
+    # Get all documents from cran.all--let Cranfile object handle this
+    cf = CranFile(r"..\CranfieldDataset\cran.all")
+    
+    # Build an inverted index object
     ii = InvertedIndex()
-    for doc in cf.docs:
+    
+    # Index one document
+    ii.indexDoc(cf.docs[0])
+    
+    # The first temr should be "experiment" (verified by printing contents of II)
+    #   We want to ensure that find() finds it
+    index_item = ii.find("experiment")
+    print("Result of find:", index_item.term, index_item.posting)
+    
+    # Next, sort to ensure that it works
+    # TODO: figure out what this should doc
+    ii.sort()
+    print("Sorted!")
+    
+    # Get the IDF of the term "experiment"
+    #   Following the formula from our slides, this should be 0
+    print("IDF:", ii.idf("experiment"))
+    
+    # Add back in the rest of Cranfield dataset
+    for doc in cf.docs[1:]:
         ii.indexDoc(doc)
+        
+    # Re-do find now that we have more things in the index
+    index_item = ii.find("experiment")
+    print("Result of find:", index_item.term, index_item.posting)
+    
+    # Ensure sort works on larger index
+    # Next, sort to ensure that it works
+    # TODO: figure out what this should doc
+    ii.sort()
+    print("Sorted!")
+    
+    # Calculate IDF with larger index
+    # Get the IDF of the term "experiment"
+    #   Following the formula from our slides, this should be 0
+    print("IDF:", ii.idf("experiment"))
+    
+    # Save off our index
+    ii.save("index.pkl")
+    
+    # Read back in the index, ensure they are the same
+    ii_from_file = InvertedIndex()
+    ii_from_file.load("index.pkl")
+    
+    # Cannot determine if the actual items are equal objects, 
+    #   so just ensure the stats are the same
+    # print("Load matches saved items:", ii.items == ii_from_file.items)
+    print("Load matches saved number of docs:", ii.nDocs == ii_from_file.nDocs)
+    print("Load matches saved IDF for 'experiment':", 
+        ii.idf("experiment") == ii_from_file.idf("experiment"))
+    print("Load matches saved find for 'experiment':",
+        str(ii.find("experiment")) == str(ii_from_file.find("experiment")))
     
     print("Done!")
     # Test out the thing
-    for item in ii.items.values():
-        print(item.term, item.posting)
+    # for item in ii.items.values():
+        # print(item.term, item.posting)
+        
     print ('Pass')
 
 def indexingCranfield():
