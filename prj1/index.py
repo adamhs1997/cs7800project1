@@ -39,7 +39,7 @@ class Posting:
         
         # The number of times a term is in a document corresponds to 
         #   the length of the position list
-        return len(positions)
+        return len(self.positions)
        
     # For testing purposes...
     def __repr__(self):
@@ -174,6 +174,8 @@ class InvertedIndex:
 def test():
     ''' test your code thoroughly. put the testing cases here'''
     
+    ####### TEST CASES FOR INVERTED INDEX CLASS #######
+    
     # Get all documents from cran.all--let Cranfile object handle this
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
@@ -229,8 +231,46 @@ def test():
     print("Load matches saved number of docs:", ii.nDocs == ii_from_file.nDocs)
     print("Load matches saved IDF for 'experiment':", 
         ii.idf("experiment") == ii_from_file.idf("experiment"))
-    print("Load matches saved find for 'experiment':",
-        str(ii.find("experiment")) == str(ii_from_file.find("experiment")))
+    print("Load matches saved find term for 'experiment':",
+        ii.find("experiment").term == ii_from_file.find("experiment").term)
+    print("Load matches saved find posting for 'experiment':",
+        str(ii.find("experiment").posting) == str(ii_from_file.find("experiment").posting))
+         
+    ####### TEST CASES FOR POSTING CLASS #######
+    
+    # Create test posting
+    p = Posting(docID=1)
+    
+    # Test adding a position
+    p.append(3)
+    print("Position appended to posting:", p.positions == [3])
+    
+    # Add position out of order, ensure sort works
+    p.append(1)
+    print("Append is initially out-of-order:", p.positions == [3, 1])
+    p.sort()
+    print("Sort correctly sorts postings:", p.positions == [1, 3])
+    
+    # Ensure we can merge in new postings
+    to_merge = [4, 5, 6]
+    p.merge(to_merge)
+    print("Merge correctly merges:", p.positions == [1, 3, 4, 5, 6])
+    
+    # Ensure term frequency is correctly
+    print("Term frequency correctly counts postings:", p.term_freq() == 5)
+    
+    ####### TEST CASES FOR INDEX ITEM CLASS #######
+    
+    # Create index item
+    iitem = IndexItem("abc")
+    
+    # Add value to index item
+    iitem.add(0, 40)
+    print("Document added to item:", 0 in iitem.posting)
+    print("Posting created for document in item:", 
+        type(iitem.posting[0]) == type(Posting(5)))
+        
+    # TODO: Test sort when we know for sure what to do
     
     print("Done!")
     # Test out the thing
