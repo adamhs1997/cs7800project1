@@ -17,6 +17,7 @@ import doc
 from cran import CranFile
 from pickle import dump, load
 from math import log10
+from sys import argv
 
 
 class Posting:
@@ -271,21 +272,37 @@ def test():
         type(iitem.posting[0]) == type(Posting(5)))
         
     # TODO: Test sort when we know for sure what to do
-    
-    print("Done!")
+
     # Test out the thing
     # for item in ii.items.values():
         # print(item.term, item.posting)
-        
-    print ('Pass')
 
 def indexingCranfield():
     #ToDo: indexing the Cranfield dataset and save the index to a file
     # command line usage: "python index.py cran.all index_file"
     # the index is saved to index_file
+    
+    # Ensure args are valid
+    if len(argv) < 3:
+        print("Syntax: python index.py <cran.all path> <index-save-location>")
+        return
 
-    print ('Done')
+    # Grab arguments
+    file_to_index = argv[1]
+    save_location = argv[2]
+    
+    # Index file
+    print("Indexing documents from", file_to_index + "...")
+    cf = CranFile(file_to_index)
+    ii = InvertedIndex()
+    for doc in cf.docs:
+        ii.indexDoc(doc)
+        
+    # Save off index
+    ii.save(save_location)
+    print("Index saved to", save_location + "!")
+    
 
 if __name__ == '__main__':
-    test()
+    # test()  # Uncomment to run tests
     indexingCranfield()
