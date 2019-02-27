@@ -46,6 +46,30 @@ class QueryProcessor:
     def booleanQuery(self):
         ''' boolean query processing; note that a query like "A B C" is transformed to "A AND B AND C" for retrieving posting lists and merge them'''
         #ToDo: return a list of docIDs
+        
+        # Ref: https://nlp.stanford.edu/IR-book/html/htmledition/processing-boolean-queries-1.html
+        
+        # Get preprocessed query
+        clean_query = preprocessing()
+        
+        # Basic algo:
+            # Retrieve postings for each term in query
+            # Intersect postings lists
+            
+        # Get posting for first term
+        master_postings = self.index.find(clean_query[0]).sorted_postings
+        
+        # Get postings for rest of query terms
+        for word in clean_query[1:]:
+            # Get the containing index item
+            index_item = self.index.find(word)
+            
+            # Get docs where the word is posted
+            current_postings = index_item.sorted_postings
+            
+            # Merge the current postings into master postings
+            master_postings = [posting for posting in current_postings
+                if posting in master_postings]
 
 
     def vectorQuery(self, k):
@@ -57,6 +81,10 @@ class QueryProcessor:
 
 def test():
     ''' test your code thoroughly. put the testing cases here'''
+    
+    # Initialize a query processor
+    #qp = QueryProcessor("/destalling/", 
+    
     print 'Pass'
 
 def query():
@@ -69,5 +97,5 @@ def query():
 
 
 if __name__ == '__main__':
-    #test()
+    test()
     query()
