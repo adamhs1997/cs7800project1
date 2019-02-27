@@ -4,6 +4,8 @@ query processing
 
 '''
 
+from norvig_spell import correction
+
 class QueryProcessor:
 
     def __init__(self, query, index, collection):
@@ -19,6 +21,26 @@ class QueryProcessor:
             removal and stemming (why?)'''
 
         #ToDo: return a list of terms
+        
+        # Tokenize and lowercase doc into list form
+        token_list = util.tokenize_doc(self.raw_query)
+            
+        # Helper function to replace stopwords with empty string
+        def remove_stop_word(tok):
+            return "" if util.isStopWord(tok) else tok
+            
+        # Correct spelling of each word
+        tokens_corrected_spell = list(map(lambda tok: correction(tok),
+            token_list))
+            
+        # Remove the stopwords from both positional list and token list
+        token_list_no_stopword = list(map(remove_stop_word, 
+            tokens_corrected_spell))
+        
+        # Stem the words
+        stemmed_token_list = list(map(lambda tok: util.stemming(tok),token_list_no_stopword))
+        
+        return stemmed_token_list
 
 
     def booleanQuery(self):
