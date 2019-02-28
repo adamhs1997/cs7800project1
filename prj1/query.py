@@ -5,13 +5,16 @@ query processing
 '''
 
 from norvig_spell import correction
+from index import InvertedIndex, IndexItem, Posting
+from cran import CranFile
+import util
 
 class QueryProcessor:
 
     def __init__(self, query, index, collection):
         ''' index is the inverted index; collection is the document collection'''
         self.raw_query = query
-        self.index
+        self.index = index
         self.docs = collection
 
     def preprocessing(self):
@@ -50,17 +53,27 @@ class QueryProcessor:
         # Ref: https://nlp.stanford.edu/IR-book/html/htmledition/processing-boolean-queries-1.html
         
         # Get preprocessed query
-        clean_query = preprocessing()
+        clean_query = self.preprocessing()
         
         # Basic algo:
             # Retrieve postings for each term in query
             # Intersect postings lists
             
-        # Get posting for first term
-        master_postings = self.index.find(clean_query[0]).sorted_postings
-        
+        # Get posting for first term to start the list
+        stop_pos = 0
+        for idx, word in enumerate(clean_query):
+            # Skip over any missing stopword positions
+            if word == '': continue
+            
+            stop_pos = idx + 1
+            master_postings = self.index.find(word).sorted_postings
+            break
+            
         # Get postings for rest of query terms
-        for word in clean_query[1:]:
+        for word in clean_query[stop_pos:]:
+            # Skip any empty stopword positions
+            if word == '': continue
+            
             # Get the containing index item
             index_item = self.index.find(word)
             
@@ -70,6 +83,9 @@ class QueryProcessor:
             # Merge the current postings into master postings
             master_postings = [posting for posting in current_postings
                 if posting in master_postings]
+                
+            print(word)
+            print(master_postings)
 
 
     def vectorQuery(self, k):
@@ -82,10 +98,18 @@ class QueryProcessor:
 def test():
     ''' test your code thoroughly. put the testing cases here'''
     
-    # Initialize a query processor
-    #qp = QueryProcessor("/destalling/", 
+    # Grab index file to restore II
+    ii = InvertedIndex()
+    ii.load(r"D:\CS 7800 Project 1\prj1\index.pkl")
     
-    print 'Pass'
+    # Get the document collection
+    cf = CranFile(r"..\CranfieldDataset\cran.all")
+    
+    # Initialize a query processor
+    qp = QueryProcessor("boundary layer cylinder", ii, cf)
+    qp.booleanQuery()
+    
+    print('Pass')
 
 def query():
     ''' the main query processing program, using QueryProcessor'''
