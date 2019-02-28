@@ -6,6 +6,7 @@
 '''
 
 from nltk.stem.porter import PorterStemmer
+from string import punctuation
 
 ### Initialization code that we only want to do once ###
 # Read in stop words
@@ -25,4 +26,10 @@ def stemming(word):
 
 def tokenize_doc(doc):
     """ Get each token (split on whitespace); lowercase each token """
-    return list(map(lambda word: word.lower(), doc.split()))
+    
+    # Split and lower
+    tokens = list(map(lambda word: word.lower(), doc.split()))
+    
+    # Remove punctuation
+    return list(map(lambda word: word.translate(str.maketrans("","",
+        punctuation)), tokens))
