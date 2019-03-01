@@ -79,10 +79,18 @@ class QueryProcessor:
             
             stop_pos = idx + 1
             master_postings = self.index.find(word).sorted_postings
+            
+            # Negate if our first position is a not
+            # NOTE: We don't have to check for or yet, as this isn't a valid first word
+            if idx-1 in not_positions:
+                print("Negate!", word)
+                master_postings = [n for n in list(range(1, self.index.nDocs+1))
+                    if n not in master_postings]
+                    
             break
             
         # Get postings for rest of query terms
-        for word in clean_query[stop_pos:]:
+        for idx, word in enumerate(clean_query[stop_pos:]):
             # Skip any empty stopword positions
             if word == '': continue
             
@@ -91,6 +99,12 @@ class QueryProcessor:
             
             # Get docs where the word is posted
             current_postings = index_item.sorted_postings
+            
+            # Negate if last position is a not
+            if stop_pos+idx-1 in not_positions:
+                print("Negate!", word)
+                current_postings = [n for n in list(range(1, self.index.nDocs+1))
+                    if n not in current_postings]
             
             # Merge the current postings into master postings
             master_postings = [posting for posting in current_postings
@@ -120,7 +134,7 @@ def test():
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("what problems of heat conductoin in composite slabs have been solved so far .", ii, cf)
+    qp = QueryProcessor("slipstream diameter", ii, cf)
     print(qp.booleanQuery())
     
 
