@@ -100,6 +100,12 @@ class QueryProcessor:
             # Get docs where the word is posted
             current_postings = index_item.sorted_postings
             
+            # If an or query, just append current to master
+            if stop_pos+idx-1 in or_positions:
+                master_postings.extend(current_postings)
+                master_postings = sorted(master_postings)
+                continue
+            
             # Negate if last position is a not
             if stop_pos+idx-1 in not_positions:
                 print("Negate!", word)
@@ -134,7 +140,7 @@ def test():
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("slipstream diameter", ii, cf)
+    qp = QueryProcessor("stagnation ", ii, cf)
     print(qp.booleanQuery())
     
 
