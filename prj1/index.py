@@ -65,7 +65,7 @@ class IndexItem:
         
         # We already have the postings in posting dict. Store the sorted docID keys
         #   in sorted_postings list, for easier reference in postings dict.
-        self.sorted_postings = sorted(self.posting.keys())
+        self.sorted_postings = sorted(self.posting)
         
         # We sort the positions of each posting in place
         for doc in self.posting:
@@ -127,7 +127,7 @@ class InvertedIndex:
             # If this term has already appeared, update the existing posting
             if not term in self.items:
                 self.items[term] = IndexItem(term)
-            self.items[term].add(doc.docID, pos)
+            self.items[term].add(int(doc.docID), pos)
 
 
     def sort(self):
@@ -298,11 +298,14 @@ def indexingCranfield():
     for doc in cf.docs:
         ii.indexDoc(doc)
         
+    # Sort index before saving
+    ii.sort()
+        
     # Save off index
     ii.save(save_location)
     print("Index saved to", save_location + "!")
     
 
 if __name__ == '__main__':
-    # test()  # Uncomment to run tests
+    #test()  # Uncomment to run tests
     indexingCranfield()
