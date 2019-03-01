@@ -52,6 +52,18 @@ class QueryProcessor:
         
         # Ref: https://nlp.stanford.edu/IR-book/html/htmledition/processing-boolean-queries-1.html
         
+        # Parse position of OR and NOT
+        #   We must do this before stopwords removed
+        or_list = list(map(lambda t: t.lower() == "or", self.raw_query.split()))
+        or_positions = []
+        for idx, bool in enumerate(or_list):
+            if bool: or_positions.append(idx)
+            
+        not_list = list(map(lambda t: t.lower() == "not", self.raw_query.split()))
+        not_positions = []
+        for idx, bool in enumerate(not_list):
+            if bool: not_positions.append(idx)
+        
         # Get preprocessed query
         clean_query = self.preprocessing()
         
@@ -86,6 +98,8 @@ class QueryProcessor:
                 
             print(word)
             print(master_postings)
+            
+        return master_postings
 
 
     def vectorQuery(self, k):
@@ -100,16 +114,15 @@ def test():
     
     # Grab index file to restore II
     ii = InvertedIndex()
-    ii.load(r"D:\CS 7800 Project 1\prj1\index.pkl")
+    ii.load(r"D:\CS 7800 Project 1\prj1\iidx.pkl")
     
     # Get the document collection
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("boundary layer cylinder", ii, cf)
-    qp.booleanQuery()
+    qp = QueryProcessor("what problems of heat conductoin in composite slabs have been solved so far .", ii, cf)
+    print(qp.booleanQuery())
     
-    print('Pass')
 
 def query():
     ''' the main query processing program, using QueryProcessor'''
