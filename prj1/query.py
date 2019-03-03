@@ -126,6 +126,47 @@ class QueryProcessor:
         ''' vector query processing, using the cosine similarity. '''
         #ToDo: return top k pairs of (docID, similarity), ranked by their cosine similarity with the query in the descending order
         # You can use term frequency or TFIDF to construct the vectors
+        
+        # May need to let x% of words match here to get any matches
+        #   (do same for bool)
+        
+        # For each term in query...
+            # Grab the tf-idf for each word in each doc
+            # Hold on to all doc ids that contain (most?) words in query
+            # Compute cosine sim and rank results
+            
+        # Get preprocessed query
+        clean_query = self.preprocessing()
+        
+        # Get IndexItems for each term in the query
+        #   Hold on to these in a list so we make sure each term in doc
+        
+        # Get the docs corresponding to the first word to start
+        doc_list = []
+        stop_pos = 0
+        for idx, word in enumerate(clean_query):
+            # Skip any empty stopword positions
+            if word == '': continue
+            
+            # Add in the docs
+            print(word)
+            stop_pos = idx + 1
+            doc_list.extend(self.index.find(word).posting)
+            print(doc_list)
+            break
+            
+        # For each following term, intersect master doc_list with current
+        for word in clean_query[stop_pos:]:
+            # Skip any empty stopword positions
+            if word == '': continue
+            
+            print(word)
+            doc_list = [id for id in self.index.find(word).posting
+                if id in doc_list]
+            print(doc_list)
+                
+        return doc_list
+            
 
 
 
@@ -140,8 +181,10 @@ def test():
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("stagnation ", ii, cf)
-    print(qp.booleanQuery())
+    qp = QueryProcessor("what controls leading-edge attachment at transonic speeds", ii, cf)
+    #print(qp.booleanQuery())
+    
+    print(qp.vectorQuery(k=3))
     
 
 def query():
