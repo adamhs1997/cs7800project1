@@ -7,6 +7,7 @@ query processing
 from norvig_spell import correction
 from index import InvertedIndex, IndexItem, Posting
 from cran import CranFile
+from math import log10
 import util
 
 class QueryProcessor:
@@ -143,7 +144,6 @@ class QueryProcessor:
         
         # Hold on to the number of times each word appears in a doc
         doc_dict = {}
-        stop_pos = 0
         for word in clean_query:
             # Skip any empty stopword positions
             if word == '': continue
@@ -153,10 +153,38 @@ class QueryProcessor:
                 if doc not in doc_dict:
                     doc_dict[doc] = 1
                 else: doc_dict[doc] += 1
-         
-        for term in doc_dict:
-            if doc_dict[term] > 1: print(term, doc_dict[term])
-        #return doc_dict
+                
+        # Calculate tf-idf of each document in question
+        # TODO: See if this is reasonable at all
+        doc_tfidf = {}
+        for doc in doc_dict:
+            current_tfidf = []
+            for word in clean_query:
+                # Skip any empty stopword positions
+                if word == '': continue
+                
+                # Get tf
+                try:
+                    tf = self.index.find(word).posting[doc].term_freq()
+                except KeyError: # if not in doc
+                    tf = 0
+                
+                # Get idf
+                idf = self.index.idf(word)
+                
+                # Calculate tf-idf
+                current_tfidf.append(log10(1 + tf) * idf)
+                
+            # Add tf-idf for this doc to the main dict
+            doc_tfidf[doc] = current_tfidf
+                
+        print(doc_tfidf)
+        
+        # See how many words actually appear in our query
+        # query_words = len([t for t in clean_query if t is not ''])
+        # for term in doc_dict:
+            # if doc_dict[term] > int(.25 * query_words): print(term, doc_dict[term])
+        return doc_dict
             
 
 
@@ -172,7 +200,7 @@ def test():
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("what controls leading-edge attachment at transonic speeds", ii, cf)
+    qp = QueryProcessor("what similarity laws must be obeyed when constructing aeroelastic models of heated high speed aircraft", ii, cf)
     #print(qp.booleanQuery())
     
     qp.vectorQuery(k=3)
