@@ -141,31 +141,22 @@ class QueryProcessor:
         # Get IndexItems for each term in the query
         #   Hold on to these in a list so we make sure each term in doc
         
-        # Get the docs corresponding to the first word to start
-        doc_list = []
+        # Hold on to the number of times each word appears in a doc
+        doc_dict = {}
         stop_pos = 0
-        for idx, word in enumerate(clean_query):
+        for word in clean_query:
             # Skip any empty stopword positions
             if word == '': continue
             
             # Add in the docs
-            print(word)
-            stop_pos = idx + 1
-            doc_list.extend(self.index.find(word).posting)
-            print(doc_list)
-            break
-            
-        # For each following term, intersect master doc_list with current
-        for word in clean_query[stop_pos:]:
-            # Skip any empty stopword positions
-            if word == '': continue
-            
-            print(word)
-            doc_list = [id for id in self.index.find(word).posting
-                if id in doc_list]
-            print(doc_list)
-                
-        return doc_list
+            for doc in self.index.find(word).posting:
+                if doc not in doc_dict:
+                    doc_dict[doc] = 1
+                else: doc_dict[doc] += 1
+         
+        for term in doc_dict:
+            if doc_dict[term] > 1: print(term, doc_dict[term])
+        #return doc_dict
             
 
 
@@ -184,7 +175,7 @@ def test():
     qp = QueryProcessor("what controls leading-edge attachment at transonic speeds", ii, cf)
     #print(qp.booleanQuery())
     
-    print(qp.vectorQuery(k=3))
+    qp.vectorQuery(k=3)
     
 
 def query():
