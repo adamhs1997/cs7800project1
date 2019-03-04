@@ -8,6 +8,7 @@ from norvig_spell import correction
 from index import InvertedIndex, IndexItem, Posting
 from cran import CranFile
 from math import log10, sqrt
+from collections import Counter
 import util
 
 class QueryProcessor:
@@ -181,6 +182,7 @@ class QueryProcessor:
             
         # Compute the vector representation for each doc, using tf-idf for
         #   EVERY possible word
+        # TODO: Move into index construction?
         tfidf_dict = {}
         for doc in doc_dict:
             word_vector = []
@@ -209,6 +211,34 @@ class QueryProcessor:
                 
             tfidf_dict[doc] = word_vector
                 
+        # Compute the cosine score between each doc and the query
+        scores = {}
+        word_count_query = Counter(clean_query)
+        for word in clean_query:
+            # Skip any empty stopword positions
+            if word == '': continue
+        
+            # Get word tf-idf
+            tf = word_count_query[word]
+            idf = self.index.idf(word)
+            tfidf = log10(1+tf) * idf
+            
+            # Count up the scores for doc weights
+            for doc in doc_dict:
+                if doc in scores:
+                    scores[doc] += \
+                        tfidf * self.index.find(word).posting[doc].term_freq()
+                else:
+                    scores[doc] = \
+                        tfidf * self.index.find(word).posting[doc].term_freq()
+                    
+        # Normalize scores by doc length
+        for doc in scores:
+            scores[doc] /= len(self.docs.docs[doc].body.split())
+            
+        for i in range(5):
+            print(scores[i])
+        
         #print(tfidf_dict)
         
         # See how many words actually appear in our query
