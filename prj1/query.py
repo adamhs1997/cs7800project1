@@ -7,7 +7,7 @@ query processing
 from norvig_spell import correction
 from index import InvertedIndex, IndexItem, Posting
 from cran import CranFile
-from math import log10
+from math import log10, sqrt
 import util
 
 class QueryProcessor:
@@ -156,13 +156,35 @@ class QueryProcessor:
                 
         # Calculate tf-idf of each document in question
         # TODO: See if this is reasonable at all
-        doc_tfidf = {}
-        for doc in doc_dict:
-            current_tfidf = []
-            for word in clean_query:
-                # Skip any empty stopword positions
-                if word == '': continue
+        #   TODO: Figure out what length array is and how we can use it...
+        # doc_tfidf = {}
+        # for doc in doc_dict:
+            # current_tfidf = []
+            # for word in clean_query:
+                # # Skip any empty stopword positions
+                # if word == '': continue
                 
+                # # Get tf
+                # try:
+                    # tf = self.index.find(word).posting[doc].term_freq()
+                # except KeyError: # if not in doc
+                    # tf = 0
+                
+                # # Get idf
+                # idf = self.index.idf(word)
+                
+                # # Calculate tf-idf
+                # current_tfidf.append(log10(1 + tf) * idf)
+                
+            # # Add tf-idf for this doc to the main dict
+            # doc_tfidf[doc] = current_tfidf
+            
+        # Compute the vector representation for each doc, using tf-idf for
+        #   EVERY possible word
+        tfidf_dict = {}
+        for doc in doc_dict:
+            word_vector = []
+            for word in self.index.items:
                 # Get tf
                 try:
                     tf = self.index.find(word).posting[doc].term_freq()
@@ -172,13 +194,22 @@ class QueryProcessor:
                 # Get idf
                 idf = self.index.idf(word)
                 
-                # Calculate tf-idf
-                current_tfidf.append(log10(1 + tf) * idf)
+                # Calculate tf-idf; add to current dict
+                word_vector.append(log10(1 + tf) * idf)
                 
-            # Add tf-idf for this doc to the main dict
-            doc_tfidf[doc] = current_tfidf
+            # Normalize the word vector
+            accum = 0
+            for word in word_vector:
+                accum += word**2
                 
-        print(doc_tfidf)
+            accum = sqrt(accum)
+                
+            for idx, word in enumerate(word_vector):
+                word_vector[idx] /= accum
+                
+            tfidf_dict[doc] = word_vector
+                
+        #print(tfidf_dict)
         
         # See how many words actually appear in our query
         # query_words = len([t for t in clean_query if t is not ''])
