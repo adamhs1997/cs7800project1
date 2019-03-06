@@ -7,8 +7,10 @@ query processing
 from norvig_spell import correction
 from index import InvertedIndex, IndexItem, Posting
 from cran import CranFile
+from cranqry import loadCranQry
 from math import log10, sqrt
 from collections import Counter
+from sys import argv
 import util
 
 class QueryProcessor:
@@ -187,6 +189,7 @@ class QueryProcessor:
             tfidf_dict[doc] = word_vector
                 
         # Compute the cosine score between each doc and the query
+        # Ref: https://nlp.stanford.edu/IR-book/html/htmledition/computing-vector-scores-1.html
         scores = {}
         word_count_query = Counter(clean_query)
         for word in clean_query:
@@ -250,8 +253,52 @@ def query():
     # processing_algorithm: 0 for booleanQuery and 1 for vectorQuery
     # for booleanQuery, the program will print the total number of documents and the list of docuement IDs
     # for vectorQuery, the program will output the top 3 most similar documents
+    
+    # Ensure args are valid
+    if len(argv) is not 5:
+        print("Syntax: python query.py <index-file-path> <processing-algorithm> <query.txt path> <query-id>")
+        return
+
+    # Grab arguments
+    index_file_loc = argv[1]
+    processing_algo = argv[2]
+    query_file_path = argv[3]
+    query_id = argv[4]
+    
+    # Grab index file to restore II
+    ii = InvertedIndex()
+    ii.load(index_file_loc)
+    
+    # Get the document collection
+    cf = CranFile(r"..\CranfieldDataset\cran.all")
+    
+    # Get the query collection
+    qc = loadCranQry(query_file_path)
+    
+    # Get the query
+    if 0 < int(query_id) < 10:
+        query_id = '00' + str(int(query_id))
+    elif 9 < int(query_id) < 100:
+        query_id = '0' + str(int(query_id))
+    try: 
+        query = qc[query_id].text
+    except KeyError:
+        print("Invalid query id", query_id)
+        return
+    
+    # Initialize a query processor
+    qp = QueryProcessor(query, ii, cf)
+    
+    # Do query
+    if int(processing_algo) is 0:
+        print(qp.booleanQuery())
+    elif int(processing_algo) is 1:
+        print(qp.vectorQuery(k=3))
+    else:
+        print("Invalid processing algorithm", processing_algo +
+            ". Use 0 (boolean) or 1 (vector).")
 
 
 if __name__ == '__main__':
-    test()
+    #test()
     query()
