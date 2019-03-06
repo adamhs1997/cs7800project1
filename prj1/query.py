@@ -225,19 +225,30 @@ class QueryProcessor:
             
             # Count up the scores for doc weights
             for doc in doc_dict:
-                if doc in scores:
-                    scores[doc] += \
-                        tfidf * self.index.find(word).posting[doc].term_freq()
+                # Get the posting for the word
+                cur_posting = self.index.find(word).posting
+                
+                # Calculate the score
+                if doc not in cur_posting:
+                    score = 0
                 else:
-                    scores[doc] = \
-                        tfidf * self.index.find(word).posting[doc].term_freq()
+                    score = tfidf * cur_posting[doc].term_freq()
+                
+                # Add up the scores
+                if doc in scores:
+                    scores[doc] += score
+                else:
+                    scores[doc] = score
                     
         # Normalize scores by doc length
         for doc in scores:
-            scores[doc] /= len(self.docs.docs[doc].body.split())
+            scores[doc] /= len(self.docs.docs[doc-1].body.split())
             
-        for i in range(5):
-            print(scores[i])
+        # Sort the scores by score
+        sorted_scores = sorted(scores.items(), reverse=True, key=lambda x: x[1])
+        
+        for i in range(k):
+            print(sorted_scores[i])
         
         #print(tfidf_dict)
         
@@ -261,10 +272,10 @@ def test():
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("what similarity laws must be obeyed when constructing aeroelastic models of heated high speed aircraft", ii, cf)
+    qp = QueryProcessor("what problems of heat conduction in composite slabs have been solved so far", ii, cf)
     #print(qp.booleanQuery())
     
-    qp.vectorQuery(k=3)
+    qp.vectorQuery(k=10)
     
 
 def query():
