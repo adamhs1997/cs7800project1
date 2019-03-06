@@ -154,31 +154,6 @@ class QueryProcessor:
                 if doc not in doc_dict:
                     doc_dict[doc] = 1
                 else: doc_dict[doc] += 1
-                
-        # Calculate tf-idf of each document in question
-        # TODO: See if this is reasonable at all
-        #   TODO: Figure out what length array is and how we can use it...
-        # doc_tfidf = {}
-        # for doc in doc_dict:
-            # current_tfidf = []
-            # for word in clean_query:
-                # # Skip any empty stopword positions
-                # if word == '': continue
-                
-                # # Get tf
-                # try:
-                    # tf = self.index.find(word).posting[doc].term_freq()
-                # except KeyError: # if not in doc
-                    # tf = 0
-                
-                # # Get idf
-                # idf = self.index.idf(word)
-                
-                # # Calculate tf-idf
-                # current_tfidf.append(log10(1 + tf) * idf)
-                
-            # # Add tf-idf for this doc to the main dict
-            # doc_tfidf[doc] = current_tfidf
             
         # Compute the vector representation for each doc, using tf-idf for
         #   EVERY possible word
@@ -246,19 +221,9 @@ class QueryProcessor:
             
         # Sort the scores by score
         sorted_scores = sorted(scores.items(), reverse=True, key=lambda x: x[1])
-        
-        for i in range(k):
-            print(sorted_scores[i])
-        
-        #print(tfidf_dict)
-        
-        # See how many words actually appear in our query
-        # query_words = len([t for t in clean_query if t is not ''])
-        # for term in doc_dict:
-            # if doc_dict[term] > int(.25 * query_words): print(term, doc_dict[term])
-        return doc_dict
-            
 
+        # Return top k scores
+        return sorted_scores[:k]
 
 
 def test():
@@ -275,7 +240,7 @@ def test():
     qp = QueryProcessor("what problems of heat conduction in composite slabs have been solved so far", ii, cf)
     #print(qp.booleanQuery())
     
-    qp.vectorQuery(k=10)
+    print(qp.vectorQuery(k=10))
     
 
 def query():
