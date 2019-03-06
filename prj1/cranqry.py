@@ -30,10 +30,10 @@ def loadCranQry(qfile):
 
 def test():
     '''testing'''
-    qrys =  loadCranQry('query.text')
+    qrys =  loadCranQry(r'..\CranfieldDataset\query.text')
     for q in qrys:
-        print q, qrys[q].text
-    print len(qrys)
+        print(q, qrys[q].text)
+    print(len(qrys))
 
 if __name__ == '__main__':
     test()
