@@ -139,7 +139,7 @@ class InvertedIndex:
             self.items[item].sort()
 
     def find(self, term):
-        return self.items[term]
+        return self.items[term] if term in self.items else None
 
     def save(self, filename):
         ''' save to disk'''
@@ -167,7 +167,8 @@ class InvertedIndex:
         #ToDo: return the IDF of the term
         
         # IDF of term t is log(total # of docs / # docs with t in it)
-        return log10(self.nDocs / len(self.items[term].posting))
+        return log10(self.nDocs / len(self.items[term].posting)) \
+            if term in self.items else 0
 
     # more methods if needed
 

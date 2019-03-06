@@ -152,7 +152,10 @@ class QueryProcessor:
             if word == '': continue
             
             # Add in the docs
-            for doc in self.index.find(word).posting:
+            word_lookup = self.index.find(word)
+            if word_lookup is None: continue
+            
+            for doc in word_lookup.posting:
                 if doc not in doc_dict:
                     doc_dict[doc] = 1
                 else: doc_dict[doc] += 1
@@ -202,9 +205,12 @@ class QueryProcessor:
             tfidf = log10(1+tf) * idf
             
             # Count up the scores for doc weights
+            word_lookup = self.index.find(word)
+            if word_lookup is None: continue
+            
             for doc in doc_dict:
                 # Get the posting for the word
-                cur_posting = self.index.find(word).posting
+                cur_posting = word_lookup.posting
                 
                 # Calculate the score
                 if doc not in cur_posting:
