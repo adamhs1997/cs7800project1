@@ -67,23 +67,52 @@ class QueryProcessor:
         not_positions = []
         for idx, bool in enumerate(not_list):
             if bool: not_positions.append(idx)
+            
+        # Parse out parenthesis positions
+        open_paren_list = list(map(lambda t: '(' in t, self.raw_query.split()))
+        close_paren_list = list(map(lambda t: ')' in t, self.raw_query.split()))
+        if len(open_paren_list) is not len(close_paren_list):
+            print("Error: Parenthesis mismatch.")
+            return
+        open_paren_positions = []
+        close_paren_positions = []
+        for idx, bool in enumerate(open_paren_list):
+            if bool: open_paren_positions.append(idx)
+        for idx, bool in enumerate(close_paren_list):
+            if bool: close_paren_positions.append(idx)
         
         # Get preprocessed query
         clean_query = self.preprocessing()
-        
-        # Basic algo:
-            # Retrieve postings for each term in query
-            # Intersect postings lists
             
+        # Handle precedence of parens
+        for idx, pos in enumerate(open_paren_positions):
+            # Get the actual subquery within parens
+            subquery = clean_query[open_paren_positions[idx] : close_paren_positions[idx]+1]
+            
+            # Run bool query on subquery
+            subquery_result = self.bool_query_helper(subquery, not_positions, or_positions)
+            
+            # Replace subquery with completed postings
+            clean_query[open_paren_positions[idx]] = subquery_result
+            
+            # Replace rest of subquery with empty strings (will be skipped)
+            for i, w in enumerate(clean_query[open_paren_positions[idx]+1 : close_paren_positions[idx]+1]):
+                clean_query[i+open_paren_positions[idx]+1] = ''
+            
+        return clean_query
+        
+        
+    def bool_query_helper(self, query, not_positions, or_positions):
         # Get posting for first term to start the list
         stop_pos = 0
-        for idx, word in enumerate(clean_query):
+        print('query', query)
+        for idx, word in enumerate(query):
             # Skip over any missing stopword positions
             if word == '': continue
             
             stop_pos = idx + 1
             master_postings = self.index.find(word).sorted_postings
-            
+            print(word)
             # Negate if our first position is a not
             # NOTE: We don't have to check for or yet, as this isn't a valid first word
             if idx-1 in not_positions:
@@ -94,7 +123,7 @@ class QueryProcessor:
             break
             
         # Get postings for rest of query terms
-        for idx, word in enumerate(clean_query[stop_pos:]):
+        for idx, word in enumerate(query[stop_pos:]):
             # Skip any empty stopword positions
             if word == '': continue
             
@@ -103,7 +132,7 @@ class QueryProcessor:
             
             # Get docs where the word is posted
             current_postings = index_item.sorted_postings
-            
+            print(word)
             # If an or query, just append current to master
             if stop_pos+idx-1 in or_positions:
                 master_postings.extend(current_postings)
@@ -246,10 +275,10 @@ def test():
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("what problems of heat conduction in composite slabs have been solved so far", ii, cf)
-    #print(qp.booleanQuery())
+    qp = QueryProcessor("(conduction and cylinder and gas) and (radiation and gas)", ii, cf)
+    print(qp.booleanQuery())
     
-    print(qp.vectorQuery(k=10))
+    #print(qp.vectorQuery(k=10))
     
 
 def query():
@@ -306,5 +335,5 @@ def query():
 
 
 if __name__ == '__main__':
-    #test()
-    query()
+    test()
+    #query()
