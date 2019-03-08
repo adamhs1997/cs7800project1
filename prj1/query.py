@@ -67,7 +67,7 @@ class QueryProcessor:
         not_positions = []
         for idx, bool in enumerate(not_list):
             if bool: not_positions.append(idx)
-            
+        print(self.raw_query)
         # Parse out parenthesis positions
         open_paren_list = list(map(lambda t: '(' in t, self.raw_query.split()))
         close_paren_list = list(map(lambda t: ')' in t, self.raw_query.split()))
@@ -100,9 +100,9 @@ class QueryProcessor:
                 clean_query[i+open_paren_positions[idx]+1] = ''
                 
         # Process the remainder of the query
-        self.bool_query_helper(clean_query, not_positions, or_positions)
+        answer = self.bool_query_helper(clean_query, not_positions, or_positions)
             
-        return clean_query
+        return answer
         
         
     def bool_query_helper(self, query, not_positions, or_positions):
@@ -111,11 +111,14 @@ class QueryProcessor:
             
         # Get postings for rest of query terms
         for idx, word in enumerate(query):
+            print("word", word)
+            print("curlist", master_postings)
             # Skip any empty stopword positions
             if word == '': continue
             
             # Merge in any existing postings
             if type(word) is type([]):
+                print("list")
                 # If a not query
                 if idx-1 in not_positions:
                     print("Negate!", word)
@@ -125,10 +128,13 @@ class QueryProcessor:
                 # If master_postings empty or this is an or query
                 if not master_postings or idx-1 in or_positions:
                     master_postings.extend(word)
+                    master_postings = sorted(master_postings)
+                    continue
                     
                 # Otherwise, just merge the posting lists
                 master_postings = [posting for posting in word
                     if posting in master_postings]
+                print(3)
                 
                 continue
             
@@ -285,7 +291,7 @@ def test():
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("(conduction and cylinder and gas) and (radiation and gas) and hugoniot", ii, cf)
+    qp = QueryProcessor("(conduction and cylinder and gas) or not (radiation and gas) and not hugoniot", ii, cf)
     print(qp.booleanQuery())
     
     #print(qp.vectorQuery(k=10))
