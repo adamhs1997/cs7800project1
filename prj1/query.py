@@ -106,6 +106,9 @@ class QueryProcessor:
         
         
     def bool_query_helper(self, query, not_positions, or_positions):
+        # Mark whether this is the first word in the query
+        first_word = True
+    
         # Get posting for first term to start the list
         master_postings = []
             
@@ -126,9 +129,10 @@ class QueryProcessor:
                         if n not in word]
             
                 # If master_postings empty or this is an or query
-                if not master_postings or idx-1 in or_positions:
+                if first_word or idx-1 in or_positions:
                     master_postings.extend(word)
                     master_postings = sorted(master_postings)
+                    first_word = False
                     continue
                     
                 # Otherwise, just merge the posting lists
@@ -142,7 +146,9 @@ class QueryProcessor:
             index_item = self.index.find(word)
             
             # Get docs where the word is posted
-            current_postings = index_item.sorted_postings
+            if index_item:
+                current_postings = index_item.sorted_postings
+            else: current_postings = []
             
             # If an or query, just append current to master
             if idx-1 in or_positions:
@@ -157,8 +163,9 @@ class QueryProcessor:
                     if n not in current_postings]
                     
             # Handle case where this is the first thing in the list
-            if not master_postings:
+            if first_word:
                 master_postings = current_postings
+                first_word = False
                 continue
             
             # Merge the current postings into master postings
@@ -291,7 +298,7 @@ def test():
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("(conduction and cylinder and gas) or not (radiation and gas) and not hugoniot", ii, cf)
+    qp = QueryProcessor("what effect do thermal stresses have on the compressive buckling strength of ring-stiffened cylinders", ii, cf)
     print(qp.booleanQuery())
     
     #print(qp.vectorQuery(k=10))
