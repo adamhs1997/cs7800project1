@@ -98,52 +98,62 @@ class QueryProcessor:
             # Replace rest of subquery with empty strings (will be skipped)
             for i, w in enumerate(clean_query[open_paren_positions[idx]+1 : close_paren_positions[idx]+1]):
                 clean_query[i+open_paren_positions[idx]+1] = ''
+                
+        # Process the remainder of the query
+        self.bool_query_helper(clean_query, not_positions, or_positions)
             
         return clean_query
         
         
     def bool_query_helper(self, query, not_positions, or_positions):
         # Get posting for first term to start the list
-        stop_pos = 0
-        print('query', query)
-        for idx, word in enumerate(query):
-            # Skip over any missing stopword positions
-            if word == '': continue
-            
-            stop_pos = idx + 1
-            master_postings = self.index.find(word).sorted_postings
-            print(word)
-            # Negate if our first position is a not
-            # NOTE: We don't have to check for or yet, as this isn't a valid first word
-            if idx-1 in not_positions:
-                print("Negate!", word)
-                master_postings = [n for n in list(range(1, self.index.nDocs+1))
-                    if n not in master_postings]
-                    
-            break
+        master_postings = []
             
         # Get postings for rest of query terms
-        for idx, word in enumerate(query[stop_pos:]):
+        for idx, word in enumerate(query):
             # Skip any empty stopword positions
             if word == '': continue
+            
+            # Merge in any existing postings
+            if type(word) is type([]):
+                # If a not query
+                if idx-1 in not_positions:
+                    print("Negate!", word)
+                    word = [n for n in list(range(1, self.index.nDocs+1))
+                        if n not in word]
+            
+                # If master_postings empty or this is an or query
+                if not master_postings or idx-1 in or_positions:
+                    master_postings.extend(word)
+                    
+                # Otherwise, just merge the posting lists
+                master_postings = [posting for posting in word
+                    if posting in master_postings]
+                
+                continue
             
             # Get the containing index item
             index_item = self.index.find(word)
             
             # Get docs where the word is posted
             current_postings = index_item.sorted_postings
-            print(word)
+            
             # If an or query, just append current to master
-            if stop_pos+idx-1 in or_positions:
+            if idx-1 in or_positions:
                 master_postings.extend(current_postings)
                 master_postings = sorted(master_postings)
                 continue
             
             # Negate if last position is a not
-            if stop_pos+idx-1 in not_positions:
+            if idx-1 in not_positions:
                 print("Negate!", word)
                 current_postings = [n for n in list(range(1, self.index.nDocs+1))
                     if n not in current_postings]
+                    
+            # Handle case where this is the first thing in the list
+            if not master_postings:
+                master_postings = current_postings
+                continue
             
             # Merge the current postings into master postings
             master_postings = [posting for posting in current_postings
@@ -275,7 +285,7 @@ def test():
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("(conduction and cylinder and gas) and (radiation and gas)", ii, cf)
+    qp = QueryProcessor("(conduction and cylinder and gas) and (radiation and gas) and hugoniot", ii, cf)
     print(qp.booleanQuery())
     
     #print(qp.vectorQuery(k=10))
