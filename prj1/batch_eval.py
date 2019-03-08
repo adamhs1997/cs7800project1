@@ -11,11 +11,35 @@ usage:
 
 '''
 
+from cranqry import loadCranQry
+from random import choice
+
+# Values to set (using the init function)
+n = 10
+
 def eval():
 
-    # ToDo
+    # Algorithm:
+        # Pick N random samples from query.txt
+        # Get top 10 results from bool query for each rnd query
+        # Get top 10 results from vector query for each rnd query
+        # Compute NDCG btn bool query results and qrels.txt
+        # Compute NDCG btn vector query results and qrels.txt
+        # Get p-value btn bool and vector
+        
+    # Get the query collection
+    qc = loadCranQry(r"D:\CS 7800 Project 1\CranfieldDataset\query.text")
+    poss_queries = list(qc)
+    
+    # Get N random queries
+    for _ in range(n):
+        query = choice(poss_queries)
+        print(query)
 
-    print 'Done'
+    print('Done')
+    
+def init():
+    pass
 
 if __name__ == '__main__':
     eval()
