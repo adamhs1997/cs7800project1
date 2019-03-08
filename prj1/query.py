@@ -114,17 +114,13 @@ class QueryProcessor:
             
         # Get postings for rest of query terms
         for idx, word in enumerate(query):
-            print("word", word)
-            print("curlist", master_postings)
             # Skip any empty stopword positions
             if word == '': continue
             
             # Merge in any existing postings
             if type(word) is type([]):
-                print("list")
                 # If a not query
                 if idx-1 in not_positions:
-                    print("Negate!", word)
                     word = [n for n in list(range(1, self.index.nDocs+1))
                         if n not in word]
             
@@ -138,7 +134,6 @@ class QueryProcessor:
                 # Otherwise, just merge the posting lists
                 master_postings = [posting for posting in word
                     if posting in master_postings]
-                print(3)
                 
                 continue
             
@@ -158,7 +153,6 @@ class QueryProcessor:
             
             # Negate if last position is a not
             if idx-1 in not_positions:
-                print("Negate!", word)
                 current_postings = [n for n in list(range(1, self.index.nDocs+1))
                     if n not in current_postings]
                     
@@ -171,9 +165,6 @@ class QueryProcessor:
             # Merge the current postings into master postings
             master_postings = [posting for posting in current_postings
                 if posting in master_postings]
-                
-            print(word)
-            print(master_postings)
             
         return master_postings
 
