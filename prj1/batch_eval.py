@@ -19,6 +19,9 @@ from index import InvertedIndex
 
 # Values to set (using the init function)
 n = 10
+index_file = ""
+query_path = ""
+qrels_path = ""
 
 def eval():
 
@@ -41,6 +44,20 @@ def eval():
     # Load up the document collection
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
+    # Get ground-truth results from qrels.txt
+    with open(r"D:\CS 7800 Project 1\CranfieldDataset\qrels.text") as f:
+        qrels = f.readlines()
+        
+    # Index qrels into a dict
+    qrel_dict = {}
+    for qrel in qrels:
+        qrel_split = qrel.split()
+        if qrel_split[0] in qrel_dict:
+            qrel_dict[qrel_split[0]].append(qrel_split[1])
+        else:
+            qrel_dict[qrel_split[0]] = [qrel_split[1]]
+    
+    
     # Get N random queries
     for _ in range(n):
         query = choice(poss_queries)
@@ -61,7 +78,9 @@ def eval():
         # Compensate for short lists with obviously "wrong" results
         while len(vector_result) < 10:
             vector_result.append(-1)
-
+            
+        
+        
     print('Done')
     
 def init():
