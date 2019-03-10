@@ -83,6 +83,7 @@ class QueryProcessor:
         
         # Get preprocessed query
         clean_query = self.preprocessing()
+        print(clean_query)
             
         # Handle precedence of parens
         for idx, pos in enumerate(open_paren_positions):
@@ -275,7 +276,10 @@ class QueryProcessor:
         sorted_scores = sorted(scores.items(), reverse=True, key=lambda x: x[1])
 
         # Return top k scores
-        return sorted_scores[:k]
+        result = []
+        for s in sorted_scores[:k]:
+            result.append(s[0])
+        return result
 
 
 def test():
@@ -289,10 +293,10 @@ def test():
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
     # Initialize a query processor
-    qp = QueryProcessor("what effect do thermal stresses have on the compressive buckling strength of ring-stiffened cylinders", ii, cf)
+    qp = QueryProcessor("what is the theoretical heat transfer rate at the stagnation point of a blunt body", ii, cf)
     print(qp.booleanQuery())
     
-    #print(qp.vectorQuery(k=10))
+    print(qp.vectorQuery(k=10))
     
 
 def query():
