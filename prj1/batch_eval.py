@@ -13,6 +13,9 @@ usage:
 
 from cranqry import loadCranQry
 from random import choice
+from query import QueryProcessor
+from cran import CranFile
+from index import InvertedIndex
 
 # Values to set (using the init function)
 n = 10
@@ -31,10 +34,33 @@ def eval():
     qc = loadCranQry(r"D:\CS 7800 Project 1\CranfieldDataset\query.text")
     poss_queries = list(qc)
     
+    # Load up the inverted index
+    ii = InvertedIndex()
+    ii.load(r"D:\CS 7800 Project 1\prj1\iidx.pkl")
+    
+    # Load up the document collection
+    cf = CranFile(r"..\CranfieldDataset\cran.all")
+    
     # Get N random queries
     for _ in range(n):
         query = choice(poss_queries)
-        print(query)
+        
+        # Initialize the query processor
+        qp = QueryProcessor(query, ii, cf)
+        
+        # Run bool query
+        bool_result = qp.booleanQuery()[:10]
+        
+        # Compensate for short lists with obviously "wrong" results
+        while len(bool_result) < 10:
+            bool_result.append(-1)
+            
+        # Run vector query
+        vector_result = qp.vectorQuery(10)
+        
+        # Compensate for short lists with obviously "wrong" results
+        while len(vector_result) < 10:
+            vector_result.append(-1)
 
     print('Done')
     
