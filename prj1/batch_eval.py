@@ -15,7 +15,9 @@ from cranqry import loadCranQry
 from random import choice
 from query import QueryProcessor
 from cran import CranFile
-from index import InvertedIndex
+from index import InvertedIndex, IndexItem, Posting
+from metrics import ndcg_score
+from scipy.stats import wilcoxon, ttest_ind
 
 # Values to set (using the init function)
 n = 10
@@ -52,36 +54,73 @@ def eval():
     qrel_dict = {}
     for qrel in qrels:
         qrel_split = qrel.split()
-        if qrel_split[0] in qrel_dict:
-            qrel_dict[qrel_split[0]].append(qrel_split[1])
+        if int(qrel_split[0]) in qrel_dict:
+            qrel_dict[int(qrel_split[0])].append(int(qrel_split[1]))
         else:
-            qrel_dict[qrel_split[0]] = [qrel_split[1]]
+            qrel_dict[int(qrel_split[0])] = [int(qrel_split[1])]
     
-    
-    # Get N random queries
+    # Run over N random queries, collecting NDCGs
+    bool_ndcgs = []
+    vector_ndcgs = []
     for _ in range(n):
-        query = choice(poss_queries)
+        # Get random query ID
+        query_id = choice(poss_queries)
         
+        # Get the query
+        if 0 < int(query_id) < 10:
+            query_id = '00' + str(int(query_id))
+        elif 9 < int(query_id) < 100:
+            query_id = '0' + str(int(query_id))
+        try: 
+            query = qc[query_id].text
+        except KeyError:
+            print("Invalid query id", query_id)
+            return
+            
         # Initialize the query processor
         qp = QueryProcessor(query, ii, cf)
         
         # Run bool query
         bool_result = qp.booleanQuery()[:10]
-        
-        # Compensate for short lists with obviously "wrong" results
-        while len(bool_result) < 10:
-            bool_result.append(-1)
             
         # Run vector query
         vector_result = qp.vectorQuery(10)
-        
-        # Compensate for short lists with obviously "wrong" results
-        while len(vector_result) < 10:
-            vector_result.append(-1)
             
+        # Pull top 10 ground-truth results from qrels dict
+        gt_results = qrel_dict[poss_queries.index(query_id)+1][:10]
         
+        # Fill rest of ground-truth list with "wrong" 0s if necessary
+        while len(gt_results) < 10:
+            gt_results.append(0)
+            
+        # Compute NDCG for bool query
+        bool_ndcg = ndcg_score(gt_results, bool_result)
         
-    print('Done')
+        # Compute NDCG for vector query
+        print(bool_result, gt_results, vector_result)
+        vector_ndcg = ndcg_score(gt_results, vector_result)
+        
+        # Accumulate NDCGs
+        bool_ndcgs.append(bool_ndcg)
+        vector_ndcgs.append(vector_ndcg)
+        
+    # Average out score lists
+    bool_avg = 0
+    for bool in bool_ndcgs:
+        bool_avg += bool
+    bool_avg /= len(bool_ndcgs)
+    
+    vector_avg = 0
+    for vector in vector_ndcgs:
+        vector_avg += vector
+    vector_avg /= len(vector_ndcgs)
+    
+    # Present averages and p-values
+    print(bool_ndcgs, vector_ndcgs)
+    print("Boolean NDCG average:", bool_avg)
+    print("Vector NDCG average:", vector_avg)
+    print("Wilcoxon p-value:", wilcoxon(bool_ndcgs, vector_ndcgs).pvalue)
+    print("T-Test p-value:", ttest_ind(bool_ndcgs, vector_ndcgs).pvalue)
     
 def init():
     pass
