@@ -67,7 +67,7 @@ class QueryProcessor:
         not_positions = []
         for idx, bool in enumerate(not_list):
             if bool: not_positions.append(idx)
-        print(self.raw_query)
+        
         # Parse out parenthesis positions
         open_paren_list = list(map(lambda t: '(' in t, self.raw_query.split()))
         close_paren_list = list(map(lambda t: ')' in t, self.raw_query.split()))
@@ -83,7 +83,6 @@ class QueryProcessor:
         
         # Get preprocessed query
         clean_query = self.preprocessing()
-        print(clean_query)
             
         # Handle precedence of parens
         for idx, pos in enumerate(open_paren_positions):
@@ -109,10 +108,10 @@ class QueryProcessor:
     def bool_query_helper(self, query, not_positions, or_positions):
         # Mark whether this is the first word in the query
         first_word = True
-    
+        
         # Get posting for first term to start the list
         master_postings = []
-            
+        
         # Get postings for rest of query terms
         for idx, word in enumerate(query):
             # Skip any empty stopword positions
@@ -128,7 +127,7 @@ class QueryProcessor:
                 # If master_postings empty or this is an or query
                 if first_word or idx-1 in or_positions:
                     master_postings.extend(word)
-                    master_postings = sorted(master_postings)
+                    master_postings = sorted(list(set(master_postings)))
                     first_word = False
                     continue
                     
@@ -143,13 +142,13 @@ class QueryProcessor:
             
             # Get docs where the word is posted
             if index_item:
-                current_postings = index_item.sorted_postings
+                current_postings = index_item.sorted_postings[:]
             else: current_postings = []
             
             # If an or query, just append current to master
             if idx-1 in or_positions:
                 master_postings.extend(current_postings)
-                master_postings = sorted(master_postings)
+                master_postings = sorted(list(set(master_postings)))
                 continue
             
             # Negate if last position is a not
@@ -285,6 +284,8 @@ class QueryProcessor:
 def test():
     ''' test your code thoroughly. put the testing cases here'''
     
+    ##### SETUP ITEMS #####
+    
     # Grab index file to restore II
     ii = InvertedIndex()
     ii.load(r"D:\CS 7800 Project 1\prj1\iidx.pkl")
@@ -292,18 +293,93 @@ def test():
     # Get the document collection
     cf = CranFile(r"..\CranfieldDataset\cran.all")
     
-    # Initialize a query processor
-    qp = QueryProcessor("what is the theoretical heat transfer rate at the stagnation point of a blunt body", ii, cf)
-    print(qp.booleanQuery())
+    # Get ground-truth results from qrels.txt
+    with open(r"D:\CS 7800 Project 1\CranfieldDataset\qrels.text") as f:
+        qrels = f.readlines()
+        
+    # Index qrels into a dict
+    qrel_dict = {}
+    for qrel in qrels:
+        qrel_split = qrel.split()
+        if int(qrel_split[0]) in qrel_dict:
+            qrel_dict[int(qrel_split[0])].append(int(qrel_split[1]))
+        else:
+            qrel_dict[int(qrel_split[0])] = [int(qrel_split[1])]
+            
+    ##### QUERY TESTS #####
     
-    print(qp.vectorQuery(k=10))
+    # Here, I use very specific boolean queries to ensure that a 
+    #   limited number of documents are returned
+    
+    # Ensure that the exact title of doc 8 matches for doc 8 
+    doc8 = "measurements of the effect of two-dimensional and three-dimensional roughness elements on boundary layer transition"
+    qp1 = QueryProcessor(doc8, ii, cf)
+    print("Bool query matches on exact title:", qp1.booleanQuery() == [8])
+    #print("Vector query matches on exact title:", qp.vectorQuery(1) == [8])
+    
+    # Ensure that bool query matches very specific AND query
+    qp2 = QueryProcessor("hugoniot and infinitesimally", ii, cf)
+    print("Bool query matches on specific AND query ('hugoniot and infinitesimally'):", qp2.booleanQuery() == [329])
+    
+    # Test that an OR query is handled properly
+    #   Both gravel and stagnation have completely distinct postings lists.
+    #   OR should merge them.
+    gravel_postings = ii.find("gravel").sorted_postings[:]
+    stag_postings = ii.find("stagnat").sorted_postings[:]
+    gravel_postings.extend(stag_postings)
+    qp3 = QueryProcessor("gravel or stagnation", ii, cf)
+    print("Bool query successfully handles OR ('gravel or stagnation'):", 
+        qp3.booleanQuery() == sorted(gravel_postings))
+    
+    # Test that NOT is handled properly
+    #   The posting list for "diameter" is a subset of "slipstream" postings
+    #   (oddly enough). To test this works, do "slipstream and not diameter"
+    #   and we chould get slipstream's postings minus those of diameter.
+    slip_postings = ii.find("slipstream").sorted_postings[:]
+    diam_postings = ii.find("diamet").sorted_postings[:]
+    slip_not_diam = [t for t in slip_postings if t not in diam_postings]
+    print("Bool query successfully handles NOT ('slipstream and not diameter'):", 
+        QueryProcessor("slipstream and not diameter", ii, cf).booleanQuery() \
+          == slip_not_diam)
+          
+    # Ensure AND/OR order doesn't matter
+    print("Bool query can handle query regardless of AND order ('a and b' = 'b and a'):",
+        QueryProcessor("slipstream and diameter", ii, cf).booleanQuery() \
+          == QueryProcessor("diameter and slipstream", ii, cf).booleanQuery())
+    print("Bool query can handle query regardless of OR order ('a or b' = 'b or a'):",
+        QueryProcessor("slipstream or diameter", ii, cf).booleanQuery() \
+          == QueryProcessor("diameter or slipstream", ii, cf).booleanQuery())
+          
+    # Ensure that the presence of parens does not change query results
+    print("Bool query can handle query regardless of parens ('slipstream and diameter'):",
+        QueryProcessor("slipstream and diameter", ii, cf).booleanQuery() \
+          == QueryProcessor("(slipstream and diameter)", ii, cf).booleanQuery())
+          
+    # Ensure parentheses do not change order of processing for AND-AND and OR-OR queries
+    print("Bool query AND is accociative ('(a and b) and c' = 'a and (b and c)'):",
+        QueryProcessor("(slipstream and diameter) and thrust", ii, cf).booleanQuery() \
+          == QueryProcessor("slipstream and (diameter and thrust)", ii, cf).booleanQuery())
+    print("Bool query OR is accociative ('(a or b) or c' = 'a or (b or c)'):",
+        QueryProcessor("(slipstream or diameter) or thrust", ii, cf).booleanQuery() \
+          == QueryProcessor("slipstream or (diameter or thrust)", ii, cf).booleanQuery())
+          
+    # Ensure parentheses properly group items
+    #   Tested by doing the query "manually" by adding/orring the correct terms
+    part_one = QueryProcessor("conduction and cylinder and gas", ii, cf).booleanQuery()
+    part_two = QueryProcessor("radiation and gas", ii, cf).booleanQuery()
+    part_one.extend(part_two)
+    expected_result = QueryProcessor("hugoniot", ii, cf).booleanQuery()
+    expected_result.extend(part_one)
+    print("Bool query parens successfully group conflicting operators:", 
+        QueryProcessor("(conduction and cylinder and gas) or (radiation and gas) or hugoniot", ii, cf).booleanQuery() \
+          == sorted(list(set(expected_result))))
     
 
 def query():
     ''' the main query processing program, using QueryProcessor'''
 
     # ToDo: the commandline usage: "echo query_string | python query.py index_file processing_algorithm"
-    # processing_algorithm: 0 for booleanQuery and 1 for vectorQuery
+    # processing_algorithm: 0 for booleanQuery and 1 for vectorQuer
     # for booleanQuery, the program will print the total number of documents and the list of docuement IDs
     # for vectorQuery, the program will output the top 3 most similar documents
     
