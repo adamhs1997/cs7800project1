@@ -272,11 +272,36 @@ def test():
     print("Posting created for document in item:", 
         type(iitem.posting[0]) == type(Posting(5)))
         
-    # TODO: Test sort when we know for sure what to do
-
-    # Test out the thing
-    # for item in ii.items.values():
-        # print(item.term, item.posting)
+    ####### ADDITIONAL TEST CASES #######
+    
+    print("\nTHE FOLLOWING ARE BASED ON THE GIVEN TEST QUESTIONS")
+    
+    # Act on the assumption all words are stemmed
+    #   This should be done in the tokenize part of util
+    #   The idea was to re-stem all words and ensure they equal the words
+    #     in the index, but some double-stemmings differ anyway.
+    
+    # Ensure stopwords were removed
+    from nltk.stem.porter import PorterStemmer
+    with open("stopwords") as f:
+        stopwords = f.readlines()
+    s = PorterStemmer()
+    stopword_vector = list(
+        map(lambda x: s.stem(x.strip()) in ii.items.items(), stopwords))
+    print("All stopwords removed from index:", not any(stopword_vector))
+    
+    # Print number of terms in dict--Dr. Chen can ensure this is right
+    print("Number of terms in dictionary:", len(ii.items))
+    
+    # Print average size of postings--Dr. Chen can ensure this makes sense
+    sum = 0
+    posting_count = 0
+    for item in ii.items.values():
+        for posting in item.posting.values():
+            sum += len(posting.positions)
+            posting_count += 1
+    print("Average posting length:", sum/posting_count)
+    
 
 def indexingCranfield():
     #ToDo: indexing the Cranfield dataset and save the index to a file
@@ -308,5 +333,5 @@ def indexingCranfield():
     
 
 if __name__ == '__main__':
-    #test()  # Uncomment to run tests
-    indexingCranfield()
+    test()  # Uncomment to run tests
+    #indexingCranfield()

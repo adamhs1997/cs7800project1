@@ -306,16 +306,16 @@ def test():
         else:
             qrel_dict[int(qrel_split[0])] = [int(qrel_split[1])]
             
-    ##### QUERY TESTS #####
+    ##### BOOL QUERY TESTS #####
     
     # Here, I use very specific boolean queries to ensure that a 
     #   limited number of documents are returned
+    print("BOOL QUERY TESTS")
     
     # Ensure that the exact title of doc 8 matches for doc 8 
     doc8 = "measurements of the effect of two-dimensional and three-dimensional roughness elements on boundary layer transition"
     qp1 = QueryProcessor(doc8, ii, cf)
     print("Bool query matches on exact title:", qp1.booleanQuery() == [8])
-    #print("Vector query matches on exact title:", qp.vectorQuery(1) == [8])
     
     # Ensure that bool query matches very specific AND query
     qp2 = QueryProcessor("hugoniot and infinitesimally", ii, cf)
@@ -373,7 +373,56 @@ def test():
     print("Bool query parens successfully group conflicting operators:", 
         QueryProcessor("(conduction and cylinder and gas) or (radiation and gas) or hugoniot", ii, cf).booleanQuery() \
           == sorted(list(set(expected_result))))
+          
+    ##### VECTOR QUERY TESTS #####
     
+    # For this, just ensure that most of the results are in the expected list
+    print("\nVECTOR QUERY TESTS")
+    
+    # Ensure vector query can match on exact title
+    print("Vector query matches on exact title:", qp1.vectorQuery(1) == [8])
+    
+    # Try a few example queries from query.text
+    #   As long as one-fifth of t-10 are in gt_result, call it a pass
+    # Note that queries with larger answer sets were chosen to
+    #   ensure there were enough to get to one-fifth of ten
+    qc = loadCranQry(r"..\CranfieldDataset\query.text")
+    poss_queries = list(qc)
+    
+    # Query 001
+    result = QueryProcessor(qc["001"].text, ii, cf).vectorQuery(10)
+    gt_result = qrel_dict[poss_queries.index("001")+1]
+    correct_vector = list(map(lambda x: x in gt_result, result))
+    print("Vector query is at least one-fifth correct for query 001:", sum(
+        correct_vector) > 2)
+        
+    # Query 128
+    result = QueryProcessor(qc["128"].text, ii, cf).vectorQuery(10)
+    gt_result = qrel_dict[poss_queries.index("128")+1]
+    correct_vector = list(map(lambda x: x in gt_result, result))
+    print("Vector query is at least one-fifth correct for query 128:", sum(
+        correct_vector) > 2)
+        
+    # Query 226
+    result = QueryProcessor(qc["226"].text, ii, cf).vectorQuery(10)
+    gt_result = qrel_dict[poss_queries.index("226")+1]
+    correct_vector = list(map(lambda x: x in gt_result, result))
+    print("Vector query is at least one-fifth correct for query 226:", sum(
+        correct_vector) > 2)
+        
+    # Query 196
+    result = QueryProcessor(qc["196"].text, ii, cf).vectorQuery(10)
+    gt_result = qrel_dict[poss_queries.index("196")+1]
+    correct_vector = list(map(lambda x: x in gt_result, result))
+    print("Vector query is at least one-fifth correct for query 196:", sum(
+        correct_vector) > 2)
+        
+    # Query 291
+    result = QueryProcessor(qc["291"].text, ii, cf).vectorQuery(10)
+    gt_result = qrel_dict[poss_queries.index("291")+1]
+    correct_vector = list(map(lambda x: x in gt_result, result))
+    print("Vector query is at least one-fifth correct for query 291:", sum(
+        correct_vector) > 2)
 
 def query():
     ''' the main query processing program, using QueryProcessor'''
