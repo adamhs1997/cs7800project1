@@ -306,11 +306,30 @@ def test():
         else:
             qrel_dict[int(qrel_split[0])] = [int(qrel_split[1])]
             
+    ##### INITIAL TEST ITEMS #####
+    print("TESTS BASED ON SUGGESTED TESTING POINTS")
+    
+    # Ensure tf is correct
+    #   Find a random word and check TF value against what is manually done
+    posting_list = ii.find("experiment").posting
+    tf_vector = []
+    for posting in posting_list:
+        tf_vector.append(len(posting_list[posting].positions) \
+            == posting_list[posting].term_freq())
+    print("TF is computed correctly:", all(tf_vector))
+    
+    # Ensure idf is correct
+    print("IDF is computed correctly:", log10(ii.nDocs / len(posting_list)) \
+        == ii.idf("experiment"))
+        
+    # As both tf and idf are correct, and tf-idf is a product of the two,
+    #   it is reasonable to assume tf-idf is computed correctly
+            
     ##### BOOL QUERY TESTS #####
     
     # Here, I use very specific boolean queries to ensure that a 
     #   limited number of documents are returned
-    print("BOOL QUERY TESTS")
+    print("\nBOOL QUERY TESTS")
     
     # Ensure that the exact title of doc 8 matches for doc 8 
     doc8 = "measurements of the effect of two-dimensional and three-dimensional roughness elements on boundary layer transition"
