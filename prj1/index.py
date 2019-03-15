@@ -16,7 +16,7 @@ import util
 import doc
 from cran import CranFile
 from pickle import dump, load
-from math import log10
+from math import log10, sqrt
 from sys import argv
 
 
@@ -76,6 +76,7 @@ class InvertedIndex:
 
     def __init__(self):
         self.items = {} # list of IndexItems
+        self.doc_tfidf = {} # tf-idf of every term in every doc
         self.nDocs = 0  # the number of indexed documents
 
 
@@ -104,7 +105,7 @@ class InvertedIndex:
         self.nDocs += 1
         
         # Grab title and body of doc, merge into one string
-        doc_string = doc.title + " " + doc.body
+        doc_string = doc.body
         
         # Tokenize and lowercase doc into list form
         token_list = util.tokenize_doc(doc_string)
@@ -170,7 +171,40 @@ class InvertedIndex:
         return log10(self.nDocs / len(self.items[term].posting)) \
             if term in self.items else 0
 
-    # more methods if needed
+    def compute_tfidf(self):
+        """ pre-compute tf-idf vectors for each word in each doc """
+        print(len(self.items))
+        for iter in range(self.nDocs):
+            doc = iter + 1
+            word_vector = []
+            print(doc)
+            # Ignore docs we know to be empty
+            if doc in (471, 995): continue
+            
+            for word in self.items:
+                # Get tf
+                try:
+                    tf = self.find(word).posting[doc].term_freq()
+                except KeyError: # if not in doc
+                    tf = 0
+                
+                # Get idf
+                idf = self.idf(word)
+                
+                # Calculate tf-idf; add to current dict
+                word_vector.append(log10(1 + tf) * idf)
+                
+            # Normalize the word vector
+            accum = 0
+            for word in word_vector:
+                accum += word**2
+                
+            accum = sqrt(accum)
+                
+            for idx, word in enumerate(word_vector):
+                word_vector[idx] /= accum
+                
+            self.doc_tfidf[doc] = word_vector
 
 
 def test():
@@ -309,7 +343,7 @@ def indexingCranfield():
     # the index is saved to index_file
     
     # Ensure args are valid
-    if len(argv) < 3:
+    if len(argv) != 3:
         print("Syntax: python index.py <cran.all path> <index-save-location>")
         return
 
@@ -326,6 +360,9 @@ def indexingCranfield():
         
     # Sort index before saving
     ii.sort()
+    
+    # Compute tf-idf vector representations for each doc
+    ii.compute_tfidf()
         
     # Save off index
     ii.save(save_location)
@@ -333,5 +370,5 @@ def indexingCranfield():
     
 
 if __name__ == '__main__':
-    test()  # Uncomment to run tests
-    #indexingCranfield()
+    #test()  # Uncomment to run tests
+    indexingCranfield()

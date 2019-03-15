@@ -205,34 +205,8 @@ class QueryProcessor:
             
         # Compute the vector representation for each doc, using tf-idf for
         #   EVERY possible word
-        # TODO: Move into index construction?
-        tfidf_dict = {}
-        for doc in doc_dict:
-            word_vector = []
-            for word in self.index.items:
-                # Get tf
-                try:
-                    tf = self.index.find(word).posting[doc].term_freq()
-                except KeyError: # if not in doc
-                    tf = 0
-                
-                # Get idf
-                idf = self.index.idf(word)
-                
-                # Calculate tf-idf; add to current dict
-                word_vector.append(log10(1 + tf) * idf)
-                
-            # Normalize the word vector
-            accum = 0
-            for word in word_vector:
-                accum += word**2
-                
-            accum = sqrt(accum)
-                
-            for idx, word in enumerate(word_vector):
-                word_vector[idx] /= accum
-                
-            tfidf_dict[doc] = word_vector
+        # --> This is pre-computed in the inverted index
+        tfidf_dict = self.index.doc_tfidf
                 
         # Compute the cosine score between each doc and the query
         # Ref: https://nlp.stanford.edu/IR-book/html/htmledition/computing-vector-scores-1.html
@@ -288,7 +262,7 @@ def test():
     
     # Grab index file to restore II
     ii = InvertedIndex()
-    ii.load(r"D:\CS 7800 Project 1\prj1\iidx.pkl")
+    ii.load(r"D:\CS 7800 Project 1\prj1\tfidfidx.pkl")
     
     # Get the document collection
     cf = CranFile(r"..\CranfieldDataset\cran.all")
