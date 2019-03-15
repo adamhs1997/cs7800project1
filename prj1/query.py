@@ -262,13 +262,13 @@ def test():
     
     # Grab index file to restore II
     ii = InvertedIndex()
-    ii.load(r"D:\CS 7800 Project 1\prj1\tfidfidx.pkl")
+    ii.load("tfidfidx.pkl")
     
     # Get the document collection
-    cf = CranFile(r"..\CranfieldDataset\cran.all")
+    cf = CranFile("cran.all")
     
     # Get ground-truth results from qrels.txt
-    with open(r"D:\CS 7800 Project 1\CranfieldDataset\qrels.text") as f:
+    with open("qrels.text") as f:
         qrels = f.readlines()
         
     # Index qrels into a dict
@@ -379,7 +379,7 @@ def test():
     #   As long as one-fifth of t-10 are in gt_result, call it a pass
     # Note that queries with larger answer sets were chosen to
     #   ensure there were enough to get to one-fifth of ten
-    qc = loadCranQry(r"..\CranfieldDataset\query.text")
+    qc = loadCranQry("query.text")
     poss_queries = list(qc)
     
     # Query 001
@@ -441,7 +441,7 @@ def query():
     ii.load(index_file_loc)
     
     # Get the document collection
-    cf = CranFile(r"..\CranfieldDataset\cran.all")
+    cf = CranFile("cran.all")
     
     # Get the query collection
     qc = loadCranQry(query_file_path)

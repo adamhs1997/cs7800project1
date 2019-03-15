@@ -10,7 +10,7 @@ from string import punctuation
 
 ### Initialization code that we only want to do once ###
 # Read in stop words
-stop_words = open(r'D:\CS 7800 Project 1\prj1\stopwords').read()
+stop_words = open('stopwords').read()
 
 # Initialize a stemmer object
 stemmer = PorterStemmer()

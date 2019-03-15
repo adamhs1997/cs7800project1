@@ -36,18 +36,18 @@ def eval():
         # Get p-value btn bool and vector
         
     # Get the query collection
-    qc = loadCranQry(r"D:\CS 7800 Project 1\CranfieldDataset\query.text")
+    qc = loadCranQry("query.text")
     poss_queries = list(qc)
     
     # Load up the inverted index
     ii = InvertedIndex()
-    ii.load(r"D:\CS 7800 Project 1\prj1\iidx.pkl")
+    ii.load("iidx.pkl")
     
     # Load up the document collection
-    cf = CranFile(r"..\CranfieldDataset\cran.all")
+    cf = CranFile("cran.all")
     
     # Get ground-truth results from qrels.txt
-    with open(r"D:\CS 7800 Project 1\CranfieldDataset\qrels.text") as f:
+    with open("qrels.text") as f:
         qrels = f.readlines()
         
     # Index qrels into a dict

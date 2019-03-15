@@ -173,11 +173,10 @@ class InvertedIndex:
 
     def compute_tfidf(self):
         """ pre-compute tf-idf vectors for each word in each doc """
-        print(len(self.items))
         for iter in range(self.nDocs):
             doc = iter + 1
             word_vector = []
-            print(doc)
+            
             # Ignore docs we know to be empty
             if doc in (471, 995): continue
             
@@ -213,7 +212,7 @@ def test():
     ####### TEST CASES FOR INVERTED INDEX CLASS #######
     
     # Get all documents from cran.all--let Cranfile object handle this
-    cf = CranFile(r"..\CranfieldDataset\cran.all")
+    cf = CranFile("cran.all")
     
     # Build an inverted index object
     ii = InvertedIndex()
