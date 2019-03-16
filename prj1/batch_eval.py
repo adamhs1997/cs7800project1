@@ -118,7 +118,10 @@ def eval():
     # Present averages and p-values
     print("Boolean NDCG average:", bool_avg)
     print("Vector NDCG average:", vector_avg)
-    print("Wilcoxon p-value:", wilcoxon(bool_ndcgs, vector_ndcgs).pvalue)
+    if n > 9:
+        print("Wilcoxon p-value:", wilcoxon(bool_ndcgs, vector_ndcgs).pvalue)
+    else:
+        print("Wilcoxon p-value: Sample size too small to be significant")
     print("T-Test p-value:", ttest_ind(bool_ndcgs, vector_ndcgs).pvalue)
     
 def init():
@@ -137,6 +140,11 @@ def init():
     query_path = argv[2]
     qrels_path = argv[3]
     n = int(argv[4])
+    
+    # Ensure we have enough test cases
+    if n < 2:
+        print("N value is too small. Try again.")
+        return False
     
     return True
 
