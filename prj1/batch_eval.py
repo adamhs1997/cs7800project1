@@ -18,6 +18,7 @@ from cran import CranFile
 from index import InvertedIndex, IndexItem, Posting
 from metrics import ndcg_score
 from scipy.stats import wilcoxon, ttest_ind
+from sys import argv
 
 # Values to set (using the init function)
 n = 10
@@ -36,18 +37,18 @@ def eval():
         # Get p-value btn bool and vector
         
     # Get the query collection
-    qc = loadCranQry("query.text")
+    qc = loadCranQry(query_path)
     poss_queries = list(qc)
     
     # Load up the inverted index
     ii = InvertedIndex()
-    ii.load("iidx.pkl")
+    ii.load(index_file)
     
     # Load up the document collection
     cf = CranFile("cran.all")
     
     # Get ground-truth results from qrels.txt
-    with open("qrels.text") as f:
+    with open(qrels_path) as f:
         qrels = f.readlines()
         
     # Index qrels into a dict
@@ -97,7 +98,6 @@ def eval():
         bool_ndcg = ndcg_score(gt_results, bool_result)
         
         # Compute NDCG for vector query
-        print(bool_result, gt_results, vector_result)
         vector_ndcg = ndcg_score(gt_results, vector_result)
         
         # Accumulate NDCGs
@@ -116,14 +116,30 @@ def eval():
     vector_avg /= len(vector_ndcgs)
     
     # Present averages and p-values
-    print(bool_ndcgs, vector_ndcgs)
     print("Boolean NDCG average:", bool_avg)
     print("Vector NDCG average:", vector_avg)
     print("Wilcoxon p-value:", wilcoxon(bool_ndcgs, vector_ndcgs).pvalue)
     print("T-Test p-value:", ttest_ind(bool_ndcgs, vector_ndcgs).pvalue)
     
 def init():
-    pass
+    global n
+    global index_file
+    global query_path
+    global qrels_path
+    
+    # Ensure args are valid
+    if len(argv) is not 5:
+        print("Syntax: python batch_eval.py <index-file-loc> <query-loc> <qrels-loc> <n>")
+        return False
+
+    # Grab arguments
+    index_file = argv[1]
+    query_path = argv[2]
+    qrels_path = argv[3]
+    n = int(argv[4])
+    
+    return True
 
 if __name__ == '__main__':
-    eval()
+    if init():
+        eval()
