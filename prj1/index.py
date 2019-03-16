@@ -147,7 +147,7 @@ class InvertedIndex:
         # ToDo: using your preferred method to serialize/deserialize the index
         
         # Combine items dict and nDocs into a list so they can be pickled together
-        to_pickle = [self.items, self.nDocs]
+        to_pickle = [self.items, self.nDocs, self.doc_tfidf]
         
         # Use Pickle to dump the index to a file
         with open(filename, 'wb') as out:
@@ -162,6 +162,7 @@ class InvertedIndex:
             file_read = load(inf)
             self.items = file_read[0]
             self.nDocs = file_read[1]
+            self.doc_tfidf = file_read[2]
 
     def idf(self, term):
         ''' compute the inverted document frequency for a given term'''
@@ -173,9 +174,14 @@ class InvertedIndex:
 
     def compute_tfidf(self):
         """ pre-compute tf-idf vectors for each word in each doc """
+        # Handle empty items with empty fector
+        self.doc_tfidf[471] = {}
+        self.doc_tfidf[995] = {}
+        
+        # Compute tf-idf vector for every other doc
         for iter in range(self.nDocs):
             doc = iter + 1
-            word_vector = []
+            word_vector = {}
             
             # Ignore docs we know to be empty
             if doc in (471, 995): continue
@@ -191,17 +197,16 @@ class InvertedIndex:
                 idf = self.idf(word)
                 
                 # Calculate tf-idf; add to current dict
-                word_vector.append(log10(1 + tf) * idf)
+                word_vector[word] = log10(1 + tf) * idf
                 
             # Normalize the word vector
             accum = 0
             for word in word_vector:
-                accum += word**2
-                
+                accum += word_vector[word]**2
             accum = sqrt(accum)
                 
-            for idx, word in enumerate(word_vector):
-                word_vector[idx] /= accum
+            for word in word_vector:
+                word_vector[word] /= accum
                 
             self.doc_tfidf[doc] = word_vector
 
