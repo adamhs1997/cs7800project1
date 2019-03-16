@@ -258,6 +258,9 @@ def test():
     #   Following the formula from our slides, this should be 0
     print("IDF:", ii.idf("experiment"))
     
+    # Get the tfidf dict
+    ii.compute_tfidf()
+    
     # Save off our index
     ii.save("index.pkl")
     

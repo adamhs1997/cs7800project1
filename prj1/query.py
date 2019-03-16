@@ -255,20 +255,20 @@ class QueryProcessor:
         return result
 
 
-def test():
+def test(index_loc, cran_loc, qrels_loc):
     ''' test your code thoroughly. put the testing cases here'''
     
     ##### SETUP ITEMS #####
     
     # Grab index file to restore II
     ii = InvertedIndex()
-    ii.load("tfidfidx.pkl")
+    ii.load(index_loc)
     
     # Get the document collection
-    cf = CranFile("cran.all")
+    cf = CranFile(cran_loc)
     
     # Get ground-truth results from qrels.txt
-    with open("qrels.text") as f:
+    with open(qrels_loc) as f:
         qrels = f.readlines()
         
     # Index qrels into a dict
@@ -471,5 +471,5 @@ def query():
 
 
 if __name__ == '__main__':
-    test()
-    #query()
+    #test("TEST.pkl", "cran.all", "qrels.text")
+    query()
