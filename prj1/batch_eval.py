@@ -89,16 +89,20 @@ def eval():
             
         # Pull top 10 ground-truth results from qrels dict
         gt_results = qrel_dict[poss_queries.index(query_id)+1][:10]
-        
-        # Fill rest of ground-truth list with "wrong" 0s if necessary
-        while len(gt_results) < 10:
-            gt_results.append(0)
             
         # Compute NDCG for bool query
-        bool_ndcg = ndcg_score(gt_results, bool_result)
+        # NOTE: There is no weighting on the bool query, so give all an even 1
+        truth_vector = list(map(lambda x: x in gt_results, bool_result))
+        bool_ndcg = ndcg_score(truth_vector, [1] * len(truth_vector))
         
         # Compute NDCG for vector query
-        vector_ndcg = ndcg_score(gt_results, vector_result)
+        vector_docs = []
+        vector_scores = []
+        for v in vector_result:
+            vector_docs.append(v[0])
+            vector_scores.append(v[1])
+        truth_vector = list(map(lambda x: x in gt_results, vector_docs))
+        vector_ndcg = ndcg_score(truth_vector, vector_scores)
         
         # Accumulate NDCGs
         bool_ndcgs.append(bool_ndcg)
@@ -118,7 +122,7 @@ def eval():
     # Present averages and p-values
     print("Boolean NDCG average:", bool_avg)
     print("Vector NDCG average:", vector_avg)
-    if n > 9:
+    if n > 19:
         print("Wilcoxon p-value:", wilcoxon(bool_ndcgs, vector_ndcgs).pvalue)
     else:
         print("Wilcoxon p-value: Sample size too small to be significant")

@@ -54,5 +54,5 @@ def ndcg_score(y_true, y_score, k=10, gains="exponential"):
     """
     best = dcg_score(y_true, y_true, k, gains)
     actual = dcg_score(y_true, y_score, k, gains)
-    return actual / best
+    return actual / best if best != 0 else 0
 

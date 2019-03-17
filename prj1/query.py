@@ -249,10 +249,7 @@ class QueryProcessor:
         sorted_scores = sorted(scores.items(), reverse=True, key=lambda x: x[1])
 
         # Return top k scores
-        result = []
-        for s in sorted_scores[:k]:
-            result.append(s[0])
-        return result
+        return sorted_scores[:k]
 
 
 def test(index_loc, cran_loc, qrels_loc):
@@ -464,7 +461,9 @@ def query():
     if int(processing_algo) is 0:
         print(qp.booleanQuery())
     elif int(processing_algo) is 1:
-        print(qp.vectorQuery(k=3))
+        result = qp.vectorQuery(k=3)
+        for r in result:
+            print("Doc", r[0], "Score", r[1])
     else:
         print("Invalid processing algorithm", processing_algo +
             ". Use 0 (boolean) or 1 (vector).")
