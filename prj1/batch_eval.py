@@ -93,7 +93,7 @@ def eval():
         # Compute NDCG for bool query
         # NOTE: There is no weighting on the bool query, so give all an even 1
         truth_vector = list(map(lambda x: x in gt_results, bool_result))
-        bool_ndcg = ndcg_score(truth_vector, [1] * len(truth_vector))
+        bool_ndcg = ndcg_score(truth_vector, [1] * len(truth_vector), k=len(truth_vector))
         
         # Compute NDCG for vector query
         vector_docs = []
@@ -102,7 +102,7 @@ def eval():
             vector_docs.append(v[0])
             vector_scores.append(v[1])
         truth_vector = list(map(lambda x: x in gt_results, vector_docs))
-        vector_ndcg = ndcg_score(truth_vector, vector_scores)
+        vector_ndcg = ndcg_score(truth_vector, vector_scores, k=len(truth_vector))
         
         # Accumulate NDCGs
         bool_ndcgs.append(bool_ndcg)
