@@ -370,7 +370,7 @@ def test(index_loc, cran_loc, qrels_loc):
     print("\nVECTOR QUERY TESTS")
     
     # Ensure vector query can match on exact title
-    print("Vector query matches on exact title:", qp1.vectorQuery(1) == [8])
+    print("Vector query matches on exact title:", qp1.vectorQuery(1)[0][0] == 8)
     
     # Try a few example queries from query.text
     #   As long as one-fifth of t-10 are in gt_result, call it a pass
@@ -382,35 +382,35 @@ def test(index_loc, cran_loc, qrels_loc):
     # Query 001
     result = QueryProcessor(qc["001"].text, ii, cf).vectorQuery(10)
     gt_result = qrel_dict[poss_queries.index("001")+1]
-    correct_vector = list(map(lambda x: x in gt_result, result))
+    correct_vector = list(map(lambda x: x in gt_result, [x[0] for x in result]))
     print("Vector query is at least one-fifth correct for query 001:", sum(
         correct_vector) > 2)
         
     # Query 128
     result = QueryProcessor(qc["128"].text, ii, cf).vectorQuery(10)
     gt_result = qrel_dict[poss_queries.index("128")+1]
-    correct_vector = list(map(lambda x: x in gt_result, result))
+    correct_vector = list(map(lambda x: x in gt_result, [x[0] for x in result]))
     print("Vector query is at least one-fifth correct for query 128:", sum(
         correct_vector) > 2)
         
     # Query 226
     result = QueryProcessor(qc["226"].text, ii, cf).vectorQuery(10)
     gt_result = qrel_dict[poss_queries.index("226")+1]
-    correct_vector = list(map(lambda x: x in gt_result, result))
+    correct_vector = list(map(lambda x: x in gt_result, [x[0] for x in result]))
     print("Vector query is at least one-fifth correct for query 226:", sum(
         correct_vector) > 2)
         
     # Query 196
     result = QueryProcessor(qc["196"].text, ii, cf).vectorQuery(10)
     gt_result = qrel_dict[poss_queries.index("196")+1]
-    correct_vector = list(map(lambda x: x in gt_result, result))
+    correct_vector = list(map(lambda x: x in gt_result, [x[0] for x in result]))
     print("Vector query is at least one-fifth correct for query 196:", sum(
         correct_vector) > 2)
         
     # Query 291
     result = QueryProcessor(qc["291"].text, ii, cf).vectorQuery(10)
     gt_result = qrel_dict[poss_queries.index("291")+1]
-    correct_vector = list(map(lambda x: x in gt_result, result))
+    correct_vector = list(map(lambda x: x in gt_result, [x[0] for x in result]))
     print("Vector query is at least one-fifth correct for query 291:", sum(
         correct_vector) > 2)
 
@@ -459,9 +459,14 @@ def query():
     
     # Do query
     if int(processing_algo) is 0:
-        print(qp.booleanQuery())
+        result = qp.booleanQuery()
+        if result:
+            print("Results:", ", ".join(str(x) for x in qp.booleanQuery()))
+        else:
+            print("Results: None")
     elif int(processing_algo) is 1:
         result = qp.vectorQuery(k=3)
+        print("Results:")
         for r in result:
             print("Doc", r[0], "Score", r[1])
     else:
